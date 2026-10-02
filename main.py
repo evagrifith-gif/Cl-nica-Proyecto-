@@ -31,7 +31,7 @@ def menu():
         elif opcion == "3":
             pacientes = listar_pacientes()
             if not pacientes:
-                print("\n⚠️ Debe registrar al menos un paciente antes de agendar una cita.")
+                print("\n Debe registrar al menos un paciente antes de agendar una cita.")
                 continue
                 
             print("\n--- PACIENTES DISPONIBLES ---")
@@ -44,7 +44,7 @@ def menu():
                 motivo = input("Motivo de consulta: ")
                 agendar_cita(paciente_id, fecha, motivo)
             except ValueError:
-                print("\n❌ El ID del paciente debe ser un número entero válido.")
+                print("\n El ID del paciente debe ser un número entero válido.")
                 
         elif opcion == "4":
             citas = listar_citas()

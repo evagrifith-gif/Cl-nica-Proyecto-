@@ -3,7 +3,7 @@ import sqlite3
 def conectar():
     return sqlite3.connect("clinica.db")
 
-# Alias por si alguna otra parte del código aún usa 'obtener_conexion'
+
 obtener_conexion = conectar
 
 def crear_tablas():

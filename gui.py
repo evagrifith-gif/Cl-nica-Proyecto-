@@ -1,36 +1,32 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from pacientes import registrar_paciente, listar_pacientes
-from citas import agendar_cita, listar_citas
+from pacientes import registrar_paciente, listar_pacientes, eliminar_paciente
+from citas import agendar_cita, listar_citas, eliminar_cita
 
 class AppClinica:
     def __init__(self, root):
         self.root = root
-        self.root.title("Clínica Integral Sanity")
-        self.root.geometry("820x620")
+        self.root.title("Clínica Integral de Salud Guisel Corporation")
+        self.root.geometry("860x640")
         self.root.configure(bg="#F4F6F9")
 
-        # Configurar estilos de Tkinter
         self.setup_styles()
 
-        # Encabezado principal
         header_frame = tk.Frame(self.root, bg="#1E3A8A", height=70)
         header_frame.pack(fill="x", side="top")
         
         titulo_app = tk.Label(
             header_frame, 
-            text="🏥 Clínica Integral Sanity", 
-            font=("Segoe UI", 18, "bold"), 
+            text="🏥 Clínica Integral de Salud Guisel Corporation", 
+            font=("Segoe UI", 16, "bold"), 
             bg="#1E3A8A", 
             fg="white"
         )
         titulo_app.pack(padx=20, pady=18, side="left")
 
-        # Contenedor principal de pestañas
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Declaración de frames para pestañas
         self.tab_reg_paciente = tk.Frame(self.notebook, bg="white")
         self.tab_ver_pacientes = tk.Frame(self.notebook, bg="white")
         self.tab_agendar_cita = tk.Frame(self.notebook, bg="white")
@@ -41,16 +37,13 @@ class AppClinica:
         self.notebook.add(self.tab_agendar_cita, text=" Agendar Cita ")
         self.notebook.add(self.tab_ver_citas, text=" Agenda Médica ")
 
-        # Evento para recargar datos automáticamente al cambiar de pestaña
         self.notebook.bind("<<NotebookTabChanged>>", self.al_cambiar_pestana)
 
-        # Crear vistas
         self.crear_vista_registro_paciente()
         self.crear_vista_lista_pacientes()
         self.crear_vista_agendar_cita()
         self.crear_vista_lista_citas()
 
-        # Cargar datos iniciales
         self.cargar_pacientes_tabla()
         self.cargar_citas_tabla()
 
@@ -66,6 +59,9 @@ class AppClinica:
         style.map("Primary.TButton", background=[("active", "#1D4ED8")])
 
         style.configure("Secondary.TButton", font=("Segoe UI", 9, "bold"), background="#E2E8F0", foreground="#0F172A", padding=6)
+        
+        style.configure("Danger.TButton", font=("Segoe UI", 9, "bold"), background="#DC2626", foreground="white", padding=6)
+        style.map("Danger.TButton", background=[("active", "#B91C1C")])
 
         style.configure("Treeview", font=("Segoe UI", 10), rowheight=28, background="white", fieldbackground="white", borderwidth=1)
         style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), background="#E2E8F0", foreground="#1E293B")
@@ -78,7 +74,6 @@ class AppClinica:
         elif tab_actual == 3:
             self.cargar_citas_tabla()
 
-    # --- PESTAÑA 1: REGISTRO DE PACIENTES ---
     def crear_vista_registro_paciente(self):
         card = tk.Frame(self.tab_reg_paciente, bg="white", padx=30, pady=30)
         card.pack(fill="both", expand=True)
@@ -107,27 +102,29 @@ class AppClinica:
         registrar_paciente(nombre, telefono, historial)
         messagebox.showinfo("Éxito", f"Paciente '{nombre}' registrado correctamente.")
         
-        # Limpiar campos
         self.ent_nombre.delete(0, tk.END)
         self.ent_telefono.delete(0, tk.END)
         self.ent_historial.delete(0, tk.END)
-        
-        # Refrescar tabla de expediente e ir automáticamente a ver el resultado
         self.cargar_pacientes_tabla()
 
-    # --- PESTAÑA 2: EXPEDIENTES (TABLA PACIENTES) ---
     def crear_vista_lista_pacientes(self):
         frame = tk.Frame(self.tab_ver_pacientes, bg="white", padx=15, pady=15)
         frame.pack(fill="both", expand=True)
 
-        # Barra superior con botón
         top_bar = tk.Frame(frame, bg="white")
         top_bar.pack(fill="x", pady=(0, 10))
         
-        btn_refresh = ttk.Button(top_bar, text="🔄 Actualizar Lista", style="Secondary.TButton", command=self.cargar_pacientes_tabla)
+        tk.Label(top_bar, text="🔍 Buscar por nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(side="left", padx=(0, 5))
+        self.ent_buscar_paciente = ttk.Entry(top_bar, width=22)
+        self.ent_buscar_paciente.pack(side="left", padx=(0, 5))
+        self.ent_buscar_paciente.bind("<KeyRelease>", lambda event: self.cargar_pacientes_tabla())
+
+        btn_eliminar = ttk.Button(top_bar, text="🗑 Eliminar Paciente", style="Danger.TButton", command=self.borrar_paciente_seleccionado)
+        btn_eliminar.pack(side="right", padx=(5, 0))
+
+        btn_refresh = ttk.Button(top_bar, text="🔄 Actualizar", style="Secondary.TButton", command=self.cargar_pacientes_tabla)
         btn_refresh.pack(side="right")
 
-        # Contenedor para tabla y scrollbar
         table_container = tk.Frame(frame, bg="white")
         table_container.pack(fill="both", expand=True)
 
@@ -135,12 +132,7 @@ class AppClinica:
         scrollbar.pack(side="right", fill="y")
 
         cols = ("id", "nombre", "telefono", "historial")
-        self.tabla_pacientes = ttk.Treeview(
-            table_container, 
-            columns=cols, 
-            show="headings", 
-            yscrollcommand=scrollbar.set
-        )
+        self.tabla_pacientes = ttk.Treeview(table_container, columns=cols, show="headings", yscrollcommand=scrollbar.set)
         scrollbar.config(command=self.tabla_pacientes.yview)
 
         headers = [("id", "ID", 50), ("nombre", "Nombre Paciente", 220), ("telefono", "Teléfono", 120), ("historial", "Historial / Alergias", 300)]
@@ -151,24 +143,35 @@ class AppClinica:
         self.tabla_pacientes.pack(fill="both", expand=True)
 
     def cargar_pacientes_tabla(self):
-        # 1. Limpiar completamente los registros visuales anteriores
         for item in self.tabla_pacientes.get_children():
             self.tabla_pacientes.delete(item)
 
-        # 2. Obtener datos actualizados desde la base de datos
-        pacientes = listar_pacientes()
+        filtro = self.ent_buscar_paciente.get().strip() if hasattr(self, 'ent_buscar_paciente') else ""
+        pacientes = listar_pacientes(filtro)
 
-        # 3. Insertar filas una por una
         if pacientes:
             for p in pacientes:
-                # Asegura que cada valor se pase convertido explícitamente a string
                 row_values = tuple(str(val) if val is not None else "" for val in p)
                 self.tabla_pacientes.insert("", "end", values=row_values)
         
-        # 4. Forzar refresco del componente en pantalla
         self.tabla_pacientes.update_idletasks()
 
-    # --- PESTAÑA 3: AGENDAR CITA ---
+    def borrar_paciente_seleccionado(self):
+        selected_item = self.tabla_pacientes.selection()
+        if not selected_item:
+            messagebox.showwarning("Atención", "Seleccione un paciente de la lista para eliminar.")
+            return
+
+        valores = self.tabla_pacientes.item(selected_item, "values")
+        p_id, nombre = valores[0], valores[1]
+
+        confirmar = messagebox.askyesno("Confirmar Eliminación", f"¿Está seguro de eliminar al paciente '{nombre}' (ID: {p_id})?\nEsto también eliminará sus citas agendadas.")
+        if confirmar:
+            eliminar_paciente(int(p_id))
+            messagebox.showinfo("Eliminado", "Paciente eliminado correctamente.")
+            self.cargar_pacientes_tabla()
+            self.cargar_citas_tabla()
+
     def crear_vista_agendar_cita(self):
         card = tk.Frame(self.tab_agendar_cita, bg="white", padx=30, pady=30)
         card.pack(fill="both", expand=True)
@@ -194,6 +197,10 @@ class AppClinica:
             messagebox.showwarning("Atención", "Complete todos los campos para agendar.")
             return
 
+        if not p_id.isdigit():
+            messagebox.showwarning("Atención", "El ID del paciente debe ser un número entero.")
+            return
+
         try:
             agendar_cita(int(p_id), fecha, motivo)
             messagebox.showinfo("Éxito", "Cita agendada correctamente.")
@@ -201,10 +208,11 @@ class AppClinica:
             self.ent_cita_fecha.delete(0, tk.END)
             self.ent_cita_motivo.delete(0, tk.END)
             self.cargar_citas_tabla()
+        except ValueError as ve:
+            messagebox.showerror("Error de Paciente", str(ve))
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo agendar la cita: {e}")
 
-    # --- PESTAÑA 4: AGENDA MÉDICA (TABLA CITAS) ---
     def crear_vista_lista_citas(self):
         frame = tk.Frame(self.tab_ver_citas, bg="white", padx=15, pady=15)
         frame.pack(fill="both", expand=True)
@@ -212,6 +220,9 @@ class AppClinica:
         top_bar = tk.Frame(frame, bg="white")
         top_bar.pack(fill="x", pady=(0, 10))
         
+        btn_eliminar = ttk.Button(top_bar, text="🗑 Cancelar Cita", style="Danger.TButton", command=self.borrar_cita_seleccionada)
+        btn_eliminar.pack(side="right", padx=(5, 0))
+
         btn_refresh = ttk.Button(top_bar, text="🔄 Actualizar Agenda", style="Secondary.TButton", command=self.cargar_citas_tabla)
         btn_refresh.pack(side="right")
 
@@ -222,12 +233,7 @@ class AppClinica:
         scrollbar.pack(side="right", fill="y")
 
         cols = ("id", "paciente", "fecha", "motivo")
-        self.tabla_citas = ttk.Treeview(
-            table_container, 
-            columns=cols, 
-            show="headings", 
-            yscrollcommand=scrollbar.set
-        )
+        self.tabla_citas = ttk.Treeview(table_container, columns=cols, show="headings", yscrollcommand=scrollbar.set)
         scrollbar.config(command=self.tabla_citas.yview)
 
         headers = [("id", "Cita #", 60), ("paciente", "Paciente", 220), ("fecha", "Fecha y Hora", 150), ("motivo", "Motivo de Consulta", 260)]
@@ -248,6 +254,21 @@ class AppClinica:
                 self.tabla_citas.insert("", "end", values=row_values)
                 
         self.tabla_citas.update_idletasks()
+
+    def borrar_cita_seleccionada(self):
+        selected_item = self.tabla_citas.selection()
+        if not selected_item:
+            messagebox.showwarning("Atención", "Seleccione una cita de la lista para cancelar.")
+            return
+
+        valores = self.tabla_citas.item(selected_item, "values")
+        c_id, paciente = valores[0], valores[1]
+
+        confirmar = messagebox.askyesno("Confirmar Cancelación", f"¿Está seguro de cancelar la Cita #{c_id} del paciente '{paciente}'?")
+        if confirmar:
+            eliminar_cita(int(c_id))
+            messagebox.showinfo("Cancelada", "Cita cancelada correctamente.")
+            self.cargar_citas_tabla()
 
 if __name__ == "__main__":
     root = tk.Tk()
