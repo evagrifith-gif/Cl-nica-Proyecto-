@@ -6,7 +6,7 @@ from citas import agendar_cita, listar_citas, eliminar_cita
 class AppClinica:
     def __init__(self, root):
         self.root = root
-        self.root.title("Clínica Integral de Salud Guisel Corporation")
+        self.root.title("Clínica Médica Serenidad")
         self.root.geometry("860x640")
         self.root.configure(bg="#F4F6F9")
 
@@ -17,7 +17,7 @@ class AppClinica:
         
         titulo_app = tk.Label(
             header_frame, 
-            text="🏥 Clínica Integral de Salud Guisel Corporation", 
+            text="🏥 Clínica Médica Serenidad", 
             font=("Segoe UI", 16, "bold"), 
             bg="#1E3A8A", 
             fg="white"
